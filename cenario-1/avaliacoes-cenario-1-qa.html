@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avaliações — Cenário 1 QA | Trilha AI First</title>
+<style>
+  /* --- tokens --- */
+  :root {
+    --bg:        #0f1117;
+    --surface:   #181c27;
+    --border:    #252a38;
+    --accent:    #4f8ef7;
+    --accent2:   #a78bfa;
+    --warn:      #f59e0b;
+    --danger:    #ef4444;
+    --success:   #22c55e;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --mono:      'JetBrains Mono', 'Fira Code', monospace;
+    --sans:      'Inter', system-ui, sans-serif;
+  }
+
+  /* --- reset --- */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 0 0 80px;
+  }
+
+  /* --- header --- */
+  .site-header {
+    border-bottom: 1px solid var(--border);
+    padding: 36px 48px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .site-header .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .site-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -.02em;
+  }
+  .site-header .meta {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* --- score summary bar --- */
+  .summary-bar {
+    display: flex;
+    gap: 1px;
+    padding: 0 48px;
+    margin: 32px 0 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+  }
+  .summary-card {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .summary-card + .summary-card { margin-left: 12px; }
+  .summary-card .ex-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+  .summary-card .ex-score {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1;
+  }
+  .summary-card .ex-class {
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .score-aprovado-distincao { color: #22c55e; }
+  .score-aprovado            { color: #4f8ef7; }
+  .score-ressalvas           { color: #f59e0b; }
+
+  /* --- exercise section --- */
+  .exercise {
+    padding: 48px 48px 0;
+    max-width: 960px;
+  }
+  .exercise + .exercise {
+    margin-top: 16px;
+    padding-top: 48px;
+    border-top: 1px solid var(--border);
+  }
+
+  .ex-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+  .ex-header-left .ex-number {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .ex-header-left h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -.02em;
+  }
+  .ex-badge {
+    flex-shrink: 0;
+    padding: 8px 18px;
+    border-radius: 99px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .badge-distincao { background: rgba(34,197,94,.12); color: #22c55e; border: 1px solid rgba(34,197,94,.25); }
+  .badge-aprovado  { background: rgba(79,142,247,.12); color: #4f8ef7; border: 1px solid rgba(79,142,247,.25); }
+  .badge-ressalvas { background: rgba(245,158,11,.12); color: #f59e0b; border: 1px solid rgba(245,158,11,.25); }
+
+  /* --- resumo --- */
+  .resumo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 8px;
+    padding: 18px 20px;
+    color: #c4cde0;
+    font-size: 14px;
+    margin-bottom: 32px;
+    line-height: 1.65;
+  }
+
+  /* --- section title --- */
+  .section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    margin-bottom: 12px;
+    margin-top: 32px;
+  }
+
+  /* --- scores table --- */
+  .scores-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin-bottom: 8px;
+  }
+  .scores-table th {
+    text-align: left;
+    font-size: 11px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .scores-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.55;
+  }
+  .scores-table tr:last-child td { border-bottom: none; }
+  .scores-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  .score-pill {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 13px;
+    text-align: center;
+    line-height: 28px;
+    flex-shrink: 0;
+  }
+  .pill-3 { background: rgba(34,197,94,.15);  color: #22c55e; }
+  .pill-2 { background: rgba(79,142,247,.15); color: #4f8ef7; }
+  .pill-1 { background: rgba(239,68,68,.15);  color: #ef4444; }
+
+  .dim-name {
+    font-weight: 600;
+    color: #e2e8f0;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .dim-just {
+    color: #94a3b8;
+    font-size: 13px;
+  }
+
+  /* --- score final row --- */
+  .score-final-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 4px;
+  }
+  .score-final-num {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1;
+  }
+  .score-final-label {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* --- armadilhas --- */
+  .trap-list { display: flex; flex-direction: column; gap: 10px; }
+  .trap-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+  }
+  .trap-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .trap-name { font-weight: 600; color: #e2e8f0; display: block; margin-bottom: 3px; }
+  .trap-desc { color: #94a3b8; font-size: 13px; }
+
+  /* --- pontos fortes / melhoria --- */
+  .points-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .points-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .points-box.strong { border-top: 2px solid #22c55e; }
+  .points-box.improve { border-top: 2px solid #f59e0b; }
+  .points-box h4 {
+    font-size: 12px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 14px;
+  }
+  .points-box.strong h4 { color: #22c55e; }
+  .points-box.improve h4 { color: #f59e0b; }
+  .point-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+  .point-item:last-child { margin-bottom: 0; }
+  .point-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+  .strong .point-dot  { background: #22c55e; }
+  .improve .point-dot { background: #f59e0b; }
+  .point-title { font-weight: 600; color: #e2e8f0; display: block; margin-bottom: 2px; }
+  .point-text  { color: #94a3b8; font-size: 13px; }
+
+  /* --- reforco --- */
+  .reforce-list { display: flex; flex-direction: column; gap: 10px; }
+  .reforce-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+  }
+  .reforce-item .reforce-title { font-weight: 600; color: #e2e8f0; display: block; margin-bottom: 4px; }
+  .reforce-item .reforce-desc  { color: #94a3b8; font-size: 13px; line-height: 1.55; }
+
+  /* --- nota revisada --- */
+  .revision-banner {
+    background: rgba(245,158,11,.07);
+    border: 1px solid rgba(245,158,11,.25);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 13.5px;
+    color: #fcd34d;
+    line-height: 1.55;
+  }
+  .revision-banner strong { display: block; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+
+  /* --- footer --- */
+  footer {
+    margin-top: 64px;
+    padding: 24px 48px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  @media (max-width: 700px) {
+    .site-header, .exercise, footer { padding-left: 20px; padding-right: 20px; }
+    .summary-bar { flex-direction: column; padding: 0 20px; }
+    .summary-card + .summary-card { margin-left: 0; margin-top: 8px; }
+    .points-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <span class="label">Trilha AI First — DGS / DB1 Global Software</span>
+  <h1>Avaliações — Cenário 1 · Papel QA</h1>
+  <p class="meta">Fase de Entendimento e Contexto &nbsp;·&nbsp; Exercícios 1.1, 1.2 e 1.3</p>
+</header>
+
+<!-- summary bar -->
+<div class="summary-bar">
+  <div class="summary-card">
+    <span class="ex-label">Exercício 1.1</span>
+    <span class="ex-score score-aprovado">2,2</span>
+    <span class="ex-class score-aprovado">Aprovado</span>
+  </div>
+  <div class="summary-card">
+    <span class="ex-label">Exercício 1.2</span>
+    <span class="ex-score score-aprovado">2,4</span>
+    <span class="ex-class score-aprovado">Aprovado</span>
+  </div>
+  <div class="summary-card">
+    <span class="ex-label">Exercício 1.3</span>
+    <span class="ex-score score-ressalvas">1,8</span>
+    <span class="ex-class score-ressalvas">Aprovado com ressalvas</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     EXERCÍCIO 1.1
+════════════════════════════════════════════ -->
+<section class="exercise">
+  <div class="ex-header">
+    <div class="ex-header-left">
+      <div class="ex-number">Exercício 1.1</div>
+      <h2>Identificação de cenários de falha de IA</h2>
+    </div>
+    <span class="ex-badge badge-aprovado">2,2 · Aprovado</span>
+  </div>
+
+  <div class="resumo">
+    O entregável demonstra maturidade técnica acima da média, especialmente nos cenários gerados pela IA (5–8), que são específicos, fundamentados nos documentos do projeto e com critérios de aceite precisos. A lista humana inicial (cenários 1–4) é visivelmente mais fraca em profundidade e especificidade — ponto crítico dado o padrão "humano primeiro" exigido. A lista final consolidada foi bem estruturada como plano de testes formal, mas tem lacunas relevantes na cobertura de falhas de contexto puro e na proposta de verificação automatizada.
+  </div>
+
+  <div class="section-title">Scores por dimensão</div>
+  <table class="scores-table">
+    <thead>
+      <tr>
+        <th style="width:32px"></th>
+        <th>Dimensão</th>
+        <th>Justificativa</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="score-pill pill-2">2</span></td>
+        <td><span class="dim-name">D1 — Domínio Conceitual</span></td>
+        <td class="dim-just">Alucinação, chunk errado e informação contraditória são bem aplicados nos cenários da IA. Porém os quatro tipos de falha de contexto (context rot, lost in the middle, overflow, chunk errado) não aparecem como casos de teste distintos e executáveis. O CT-06 é classificado como "Falha de contexto" mas testa threshold numérico, não degradação por contexto longo.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-2">2</span></td>
+        <td><span class="dim-name">D2 — Uso de Ferramentas</span></td>
+        <td class="dim-just">Há evidência de uso do Claude com prompt transcrito e cenários marcados por fonte. Porém o prompt não fornece os guardrails nem o contexto documental específico (PROC-042, SLA-2024). Não há iteração v1 → v2 demonstrada — apenas um round de prompt. Triagem crítica dos cenários da IA é implícita.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-2">2</span></td>
+        <td><span class="dim-name">D3 — Qualidade do Entregável</span></td>
+        <td class="dim-just">Lista final bem formatada com ID, prioridade, categoria, passos, resultado esperado e rastreabilidade de fonte. Atinge 10 casos de teste. Falta cobertura real de context rot e overflow como CTs executáveis; categoria "recusa inadequada" não tem CT correspondente; CTs de performance sem critério numérico de aceite.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-2">2</span></td>
+        <td><span class="dim-name">D4 — Pensamento Crítico</span></td>
+        <td class="dim-just">A lista humana existe e foi entregue antes da expansão via IA — padrão respeitado. Porém os 4 cenários humanos são notavelmente mais rasos que os da IA: genéricos, sem pergunta de teste específica, sem comportamento indesejado descrito. O cenário mais qualificado não tem critério de aceite mensurável.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-3">3</span></td>
+        <td><span class="dim-name">D5 — Aplicabilidade ao Projeto</span></td>
+        <td class="dim-just">Referencia diretamente PROC-042 v1/v2, POL-001 seção 3.2, SLA-2024, FAQ-Atendimento.md, percentuais de seguro, multiplicadores regionais específicos (Norte 1.6→1.8), tiers de SLA, limiar de R$100.000. Impossível reutilizar sem modificação em outro projeto.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="score-final-row">
+    <span class="score-final-num score-aprovado">2,2</span>
+    <span class="score-final-label">Score do exercício &nbsp;·&nbsp; média das 5 dimensões</span>
+  </div>
+
+  <div class="section-title">Verificação de armadilhas</div>
+  <div class="trap-list">
+    <div class="trap-item">
+      <span class="trap-icon">ℹ️</span>
+      <div>
+        <span class="trap-name">Sem armadilhas formais neste exercício</span>
+        <span class="trap-desc">O exercício 1.1 não lista armadilhas intencionais. A única verificação obrigatória é o padrão "humano primeiro" — a lista humana existe e precede o uso da IA, portanto D4 não foi cortado automaticamente. Os cenários 1–4 são rasos mas substantivos o suficiente para não configurar D4 ≤ 1.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Pontos fortes e de melhoria</div>
+  <div class="points-grid">
+    <div class="points-box strong">
+      <h4>Pontos fortes</h4>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Cenários da IA são de alta qualidade</span>
+          <span class="point-text">Cenários 5–8 com multiplicadores concretos (PROC-042 v1/v2), referências de documento específicas, critérios de aceite precisos e impacto de negócio documentado.</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Plano de testes formal utilizável</span>
+          <span class="point-text">Estrutura com premissas, dependências, riscos, matriz de casos e rastreabilidade de fonte (Humana/IA) — acima do nível mínimo esperado.</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Consciência dos riscos de negócio</span>
+          <span class="point-text">Cada cenário qualificado deixa claro o impacto — erro financeiro, risco regulatório ANTT, comprometimento contratual. Pensamento de QA sênior.</span>
+        </div>
+      </div>
+    </div>
+    <div class="points-box improve">
+      <h4>Pontos de melhoria</h4>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Lista humana precisa do mesmo rigor</span>
+          <span class="point-text">Cenários 1–4 sem pergunta de teste, comportamento indesejado ou critério de aceite. Redigir já no formato final antes de usar o Claude força o raciocínio e torna o "antes" comparável ao "depois".</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Context rot e overflow sem CTs executáveis</span>
+          <span class="point-text">Um CT de context rot seria: iniciar sessão, fazer 8 perguntas progressivas, na 8ª verificar coerência com a 1ª resposta. Sem esse tipo de caso, uma classe inteira de falha de RAG fica sem cobertura.</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">CTs de performance sem critério numérico</span>
+          <span class="point-text">CT-09 e CT-10 aceitam qualquer resposta "dentro do SLA definido" sem definir qual SLA. Um caso de teste sem critério mensurável não pode ser aprovado ou reprovado.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Tópicos para reforço</div>
+  <div class="reforce-list">
+    <div class="reforce-item">
+      <span class="reforce-title">Engenharia de Contexto — falhas em RAG com memória de sessão</span>
+      <span class="reforce-desc">Compreende os conceitos de context rot e lost in the middle, mas não os traduziu em casos de teste executáveis. Reforço deve focar em como desenhar testes que provocam deliberadamente essas degradações — sessões longas, posicionamento estratégico de informação no contexto, consultas dependentes de informação anterior.</span>
+    </div>
+    <div class="reforce-item">
+      <span class="reforce-title">Engenharia de Prompt — uso iterativo da ferramenta</span>
+      <span class="reforce-desc">O prompt enviado ao Claude não forneceu o contexto documental completo, o que significa que bons cenários foram obtidos por coincidência, não por engenharia deliberada. Um segundo round com os documentos específicos provavelmente geraria os CTs de contexto ausentes.</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     EXERCÍCIO 1.2
+════════════════════════════════════════════ -->
+<section class="exercise">
+  <div class="ex-header">
+    <div class="ex-header-left">
+      <div class="ex-number">Exercício 1.2</div>
+      <h2>Design de critérios de aceitação para respostas de IA</h2>
+    </div>
+    <span class="ex-badge badge-aprovado">2,4 · Aprovado</span>
+  </div>
+
+  <div class="resumo">
+    O entregável demonstra domínio conceitual sólido — ambas as armadilhas obrigatórias foram identificadas com justificativa correta e referência documental específica. A rubrica gerada via Claude é bem estruturada, reutilizável e diretamente aplicável ao contexto NovaTech, e o template em planilha (Cowork) tem estrutura funcional com dashboard e aba de fontes válidas. O ponto de atenção central é a avaliação manual das respostas 1 e 2, classificadas como "Parcialmente correto" quando a rubrica as considera corretas — um erro de julgamento no componente "humano primeiro". A tarefa 4 (aplicar a rubrica às 5 respostas com pontuação) não foi entregue.
+  </div>
+
+  <div class="section-title">Scores por dimensão</div>
+  <table class="scores-table">
+    <thead>
+      <tr>
+        <th style="width:32px"></th>
+        <th>Dimensão</th>
+        <th>Justificativa</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="score-pill pill-2">2</span></td>
+        <td><span class="dim-name">D1 — Domínio Conceitual</span></td>
+        <td class="dim-just">Compreende alucinação e distinção entre documento normativo e informal. Porém a classificação das respostas 1 e 2 como "Parcialmente correto" revela não distinção entre "incorreto" (dado errado) e "incompleto" (dado certo, cobertura parcial) — dois conceitos diferentes na avaliação de sistemas não-determinísticos.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-2">2</span></td>
+        <td><span class="dim-name">D2 — Uso de Ferramentas</span></td>
+        <td class="dim-just">Evidência de uso do Claude (rubrica.md presente e bem estruturada) e do Cowork (planilha funcional gerada). Porém os prints de evidência não estão acessíveis nos arquivos — impede verificar o prompt e iteração. Não há registro de v1 → v2 da rubrica.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-3">3</span></td>
+        <td><span class="dim-name">D3 — Qualidade do Entregável</span></td>
+        <td class="dim-just">Rubrica com 4 dimensões, escala 1–3, exemplos concretos por nível, regra de veto para D3 e ficha de registro. Planilha com 3 abas funcionais (Avaliação em Lote, Dashboard, Rúbrica) e aba "Fontes Válidas" com documentos NovaTech, versões, conflitos e gaps. Template genuinamente reutilizável. Única lacuna: aba "Avaliação em Lote" vazia — pontuações não aplicadas.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-2">2</span></td>
+        <td><span class="dim-name">D4 — Pensamento Crítico</span></td>
+        <td class="dim-just">Avaliação manual existe e precede as ferramentas — padrão respeitado. Armadilhas identificadas antes da rubrica. Porém respostas 1 e 2 avaliadas incorretamente, e a rubrica não foi aplicada às 5 respostas (tarefa 4 não entregue) — impedindo verificar se o julgamento inicial foi revisado à luz do critério formalizado.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-3">3</span></td>
+        <td><span class="dim-name">D5 — Aplicabilidade ao Projeto</span></td>
+        <td class="dim-just">Aba "Fontes Válidas" lista os 5 documentos com versão, tipo, seção relevante e conflitos conhecidos (PROC-042 v1/v2 com multiplicadores específicos, tiers de SLA com critérios numéricos, gap FAQ vs normativos). A regra de veto está mapeada diretamente aos 4 guardrails do projeto.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="score-final-row">
+    <span class="score-final-num score-aprovado">2,4</span>
+    <span class="score-final-label">Score do exercício &nbsp;·&nbsp; média das 5 dimensões</span>
+  </div>
+
+  <div class="section-title">Verificação de armadilhas</div>
+  <div class="trap-list">
+    <div class="trap-item">
+      <span class="trap-icon">✅</span>
+      <div>
+        <span class="trap-name">Armadilha #1 — Resposta 3: SLA do cliente Platinum</span>
+        <span class="trap-desc">Identificada. Classificada como "Incorreto" com justificativa: "Precisa informar que não existe essa categoria de cliente na NovaTech." Diagnóstico correto. Faltou citar explicitamente "SLA-2024" na justificativa, mas o raciocínio é válido.</span>
+      </div>
+    </div>
+    <div class="trap-item">
+      <span class="trap-icon">✅</span>
+      <div>
+        <span class="trap-name">Armadilha #2 — Resposta 4: Devolução de carga perigosa</span>
+        <span class="trap-desc">Identificada. Classificada como "Incorreto" com referência documental: "conforme POL-001, seção 3.2" e orientação correta ao ramal 4500. Diagnóstico correto e completo.</span>
+      </div>
+    </div>
+    <div class="trap-item">
+      <span class="trap-icon">⚠️</span>
+      <div>
+        <span class="trap-name">Ponto de atenção — Respostas 1 e 2 avaliadas incorretamente</span>
+        <span class="trap-desc">A rubrica da skill estabelece que as respostas 1, 2 e 5 devem ser avaliadas como corretas. O participante avaliou 1 e 2 como "Parcialmente correto", confundindo "completude" com "precisão factual". Não configura corte automático de D4 (não é armadilha formal), mas é erro de julgamento relevante.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Pontos fortes e de melhoria</div>
+  <div class="points-grid">
+    <div class="points-box strong">
+      <h4>Pontos fortes</h4>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Rubrica e template com qualidade de artefato real</span>
+          <span class="point-text">Regra de veto automático para D3 (guardrail) é um mecanismo correto e não trivial — demonstra entendimento de que em sistemas com riscos operacionais, algumas falhas não têm pontuação intermediária.</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Armadilhas encontradas com justificativa fundamentada</span>
+          <span class="point-text">Para a resposta 4, a citação de "POL-001, seção 3.2" e a orientação correta (ramal 4500) demonstram que o participante leu o documento, não apenas intuiu o erro.</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Aba "Fontes Válidas" — adição de alto valor não solicitada</span>
+          <span class="point-text">Transforma o template de formulário genérico em artefato de onboarding para qualquer avaliador que não conheça o projeto. Pensamento de QA sênior.</span>
+        </div>
+      </div>
+    </div>
+    <div class="points-box improve">
+      <h4>Pontos de melhoria</h4>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Tarefa 4 não entregue</span>
+          <span class="point-text">A aba "Avaliação em Lote" está vazia. Preencher com os 5 casos, scores por dimensão e observações fecha o ciclo do exercício e permite verificar se o julgamento inicial foi revisado.</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Confusão entre precisão factual e completude</span>
+          <span class="point-text">Resposta 1 está factualmente correta para a pergunta feita — a omissão de outras exceções é problema de completude (D4), não de precisão (D1). Aplicar a própria rubrica às respostas seria suficiente para detectar a inconsistência.</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Evidências de prompt e iteração não acessíveis</span>
+          <span class="point-text">Prints mencionados no HTML mas não entregues como arquivos. Incluir o prompt textual transcrito garante auditabilidade independente das imagens.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Tópicos para reforço</div>
+  <div class="reforce-list">
+    <div class="reforce-item">
+      <span class="reforce-title">Fundamentos de IA — graus de qualidade em sistemas não-determinísticos</span>
+      <span class="reforce-desc">Distinguir "incorreto" (dado errado, regra invertida) de "incompleto" (dado certo, cobertura parcial) de "correto" (resposta alinhada com o documento para a pergunta feita). A rubrica criada pelo próprio participante faz essa distinção via D1 e D4 — mas não foi aplicada de forma consistente nas respostas 1 e 2.</span>
+    </div>
+    <div class="reforce-item">
+      <span class="reforce-title">Revisão Crítica — fechar o ciclo entre análise manual e rubrica formalizada</span>
+      <span class="reforce-desc">O padrão correto é: avaliar manualmente → construir rubrica → re-avaliar com a rubrica → verificar se o julgamento inicial foi confirmado ou corrigido. Tratar o preenchimento do template como entregável obrigatório, não opcional.</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     EXERCÍCIO 1.3
+════════════════════════════════════════════ -->
+<section class="exercise">
+  <div class="ex-header">
+    <div class="ex-header-left">
+      <div class="ex-number">Exercício 1.3</div>
+      <h2>Plano de testes para pipeline de RAG</h2>
+    </div>
+    <span class="ex-badge badge-ressalvas">1,8 · Aprovado com ressalvas</span>
+  </div>
+
+  <div class="revision-banner">
+    <strong>⚠ Nota revisada — delegação integral para IA</strong>
+    O entregável foi gerado integralmente pela IA a partir de um único prompt com as informações do exercício, sem evidência de análise crítica, iteração ou julgamento próprio sobre o output gerado. O score original (2,8) foi revisado para 1,8 após essa informação ser confirmada.
+  </div>
+
+  <div class="resumo">
+    O artefato produzido (planilha com 33 casos de teste em 6 categorias, dashboard com gatilhos de execução, glossário RAG e 3 armadilhas mapeadas) tem qualidade técnica real — mas foi gerado pela IA sem análise crítica do participante. Não há evidência de iteração, refinamento ou identificação de eventuais erros no output. O entregável correto por delegação não é equivalente ao entregável correto por compreensão.
+  </div>
+
+  <div class="section-title">Scores por dimensão</div>
+  <table class="scores-table">
+    <thead>
+      <tr>
+        <th style="width:32px"></th>
+        <th>Dimensão</th>
+        <th>Justificativa</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="score-pill pill-2">2</span></td>
+        <td><span class="dim-name">D1 — Domínio Conceitual</span></td>
+        <td class="dim-just">Os conceitos estão corretos no documento (context rot, lost in the middle, Recall@5, model drift, LLM judge) mas foram demonstrados pela IA, não pelo participante. Score original 3 revisado para 2 — não é possível afirmar que o participante dominaria os conceitos sem a ferramenta.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-1">1</span></td>
+        <td><span class="dim-name">D2 — Uso de Ferramentas</span></td>
+        <td class="dim-just">Um único prompt com as informações do exercício, output aceito integralmente sem iteração demonstrada. Enquadra diretamente no score 1 da Foundation: "prompt genérico único sem iteração, output aceito acriticamente." O Cowork foi usado para organização, mas também sem refinamento visível.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-2">2</span></td>
+        <td><span class="dim-name">D3 — Qualidade do Entregável</span></td>
+        <td class="dim-just">O artefato continua completo, correto e bem estruturado — 6 categorias, 33 casos, passo a passo executável, critérios como asserts, glossário. Cai de 3 para 2 porque sem análise crítica não é possível garantir que o participante identificaria erros caso a IA os tivesse cometido.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-1">1</span></td>
+        <td><span class="dim-name">D4 — Pensamento Crítico</span></td>
+        <td class="dim-just">O que foi avaliado como "análise própria" na versão original (armadilhas no dashboard, GEN-002 com dois chunks, CTX-002 com posicionamento deliberado) foi produzido pela IA. Não há evidência de julgamento próprio sobre o output — o que foi adicionado, removido ou questionado. Aceitação acrítica.</td>
+      </tr>
+      <tr>
+        <td><span class="score-pill pill-3">3</span></td>
+        <td><span class="dim-name">D5 — Aplicabilidade ao Projeto</span></td>
+        <td class="dim-just">Mantém score 3. O participante forneceu o contexto correto no prompt (informações do projeto NovaTech), o que exige leitura e seleção do que era relevante. INS-002 verifica strings específicas do POL-001; GEN-006 calcula frete com fórmula correta (1000 × 1.5 × 1.15 = R$1.725,00); E2E-002 usa threshold exato de R$100k e SLA de incidente crítico Gold.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="score-final-row">
+    <span class="score-final-num score-ressalvas">1,8</span>
+    <span class="score-final-label">Score do exercício &nbsp;·&nbsp; média das 5 dimensões (revisado)</span>
+  </div>
+
+  <div class="section-title">Verificação de armadilhas</div>
+  <div class="trap-list">
+    <div class="trap-item">
+      <span class="trap-icon">ℹ️</span>
+      <div>
+        <span class="trap-name">Sem armadilhas formais neste exercício</span>
+        <span class="trap-desc">O exercício 1.3 não lista armadilhas intencionais. A avaliação foca em cobertura de categorias, profundidade técnica e especificidade ao domínio. Todos os critérios obrigatórios da rubrica foram verificados — as 6 categorias estão presentes, os pares pergunta → chunk são específicos, testes de contexto cobrem os três fenômenos e o artefato é funcional.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Pontos fortes e de melhoria</div>
+  <div class="points-grid">
+    <div class="points-box strong">
+      <h4>Pontos fortes</h4>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Qualidade técnica do artefato gerado</span>
+          <span class="point-text">GEN-002 injeta deliberadamente v1 e v2 no mesmo contexto para testar priorização — separação arquitetural correta entre teste de retrieval e teste de geração. O dashboard com gatilhos de execução transforma o plano em protocolo operacional utilizável por engenheiros de CI.</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Contexto NovaTech fornecido corretamente no prompt</span>
+          <span class="point-text">O participante identificou e selecionou as informações relevantes do projeto para alimentar a IA, resultando em um artefato específico ao domínio. Essa competência de seleção de contexto tem valor real.</span>
+        </div>
+      </div>
+    </div>
+    <div class="points-box improve">
+      <h4>Pontos de melhoria</h4>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Ausência total de análise crítica sobre o output</span>
+          <span class="point-text">Não há registro do que o participante concordou, questionou ou corrigiu. Se a IA tivesse gerado um teste com threshold de context rot errado (3 turnos em vez de 20+), o participante identificaria? Sem evidência disso, não é possível confirmar compreensão.</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">Iteração é o que transforma uso em aprendizado</span>
+          <span class="point-text">Um segundo round de prompt — "O que está faltando neste plano? Quais riscos eu não cobri?" — forçaria o participante a avaliar o output antes de entregar. A iteração não é formalidade: é o mecanismo pelo qual o julgamento próprio entra no processo.</span>
+        </div>
+      </div>
+      <div class="point-item">
+        <span class="point-dot"></span>
+        <div>
+          <span class="point-title">O exercício precisa de âncora humana prévia</span>
+          <span class="point-text">O enunciado do 1.3 não exige "humano primeiro" explicitamente, mas deveria. Sem uma lista inicial de categorias ou riscos que o participante considera necessários, o exercício mede engenharia de prompt — não pensamento crítico de QA.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Tópicos para reforço</div>
+  <div class="reforce-list">
+    <div class="reforce-item">
+      <span class="reforce-title">Revisão Crítica — avaliar output de IA antes de aceitar</span>
+      <span class="reforce-desc">A competência central da trilha não é gerar output com IA — é julgar se o output está correto. Para o plano de testes: ler cada caso gerado e perguntar "se a IA tivesse errado aqui, eu identificaria?" e "o que eu adicionaria que a IA não pensou?" Esse exercício de análise crítica é o que precisa ser evidenciado no entregável.</span>
+    </div>
+    <div class="reforce-item">
+      <span class="reforce-title">Engenharia de Prompt — uso iterativo como ferramenta de pensamento</span>
+      <span class="reforce-desc">Um único prompt produz um output. Múltiplos rounds produzem refinamento e revelam o raciocínio do participante. Próximo exercício: após receber o output inicial, fazer ao menos um round de crítica explícita — "identifique o que está faltando", "o que está incorreto dado este documento específico", "o que eu mudaria e por quê".</span>
+    </div>
+    <div class="reforce-item">
+      <span class="reforce-title">RAG — pipeline por etapas e testes de contexto</span>
+      <span class="reforce-desc">O artefato cobre os conceitos mas não é possível confirmar domínio independente. Revisitar a arquitetura de ingestão → retrieval → geração e ser capaz de descrever, sem auxílio de IA, o que pode dar errado em cada etapa e como testaria cada uma separadamente.</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Trilha AI First — DGS / DB1 Global Software &nbsp;·&nbsp; Cenário 1 · Papel QA &nbsp;·&nbsp; Avaliação gerada via Claude
+</footer>
+
+</body>
+</html>
