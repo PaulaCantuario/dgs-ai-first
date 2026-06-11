@@ -1,0 +1,34 @@
+Atue como Engenheiro de Qualidade de Software migrando para a stack IA FirstVocê precisa criar a sessão "Testing Standards" do "AGENTS.md"As decisões técnicas do Tech Lead: "Vitest para testes unitários e de integração. Mocks com msw (Mock Service Worker) para APIs externas. Testes rodam no CI via GitHub Actions. Coverage mínimo: 80% de linhas."Um exemplo de teste ruim gerado por IA (simulado):// Teste gerado pelo Copilot sem guidance
+test('query endpoint works', async () => {
+  const result = await handler({ body: '{"question": "test"}' });
+  expect(result).toBeDefined();
+});Tarefa:Inclua no arquivo:
+Padrão de nomenclatura de testes (describe/it com frases descritivas em inglês).O que todo teste DEVE ter (arrange/act/assert, assertions específicas).O que todo teste NÃO DEVE ter (acesso a serviços reais, dependência de ordem, assertions vagas).Padrão de mocking (msw para HTTP, factories para dados).Padrão de fixtures (dados reutilizáveis para testes de RAG — perguntas, chunks, respostas esperadas).Suite separada indicando o que são testes unitários e de integraçãoMostrar mais14:40Claude respondeu: O deliverable aqui é claramente um arquivo Markdown (o AGENTS.Check available skillsCheck available skillsO deliverable aqui é claramente um arquivo Markdown (o AGENTS.md), não um Word. Vou criar direto.Criou um arquivo, leu um arquivoCriou um arquivo, leu um arquivoPronto. Aqui vai o raciocínio por trás das decisões mais importantes do arquivo:
+
+Por que separar .unit.test.ts de .integration.test.ts no sufixo do arquivo?
+Porque Vitest permite filtrar por padrão de nome: vitest run --reporter=verbose "*.unit.*" roda só unitários. Em CI, isso permite ter dois jobs separados — um rápido (unitários, sem msw server overhead) e um mais lento (integração). Se tudo fica num arquivo só, você perde essa flexibilidade e acaba rodando msw em testes que não precisam dele.
+
+Por que msw e não vi.mock('axios') ou vi.mock('node-fetch')?
+Mockar o módulo de HTTP testa se você chamou a função certa, não se o contrato HTTP está correto. Com msw, você testa a requisição real que sai — método, URL, headers, body. Se o código mudar de axios para fetch, seu mock de módulo quebra silenciosamente. O handler msw continua funcionando porque ele intercepta a rede, não a implementação.
+Para RAG especificamente isso é crítico: o payload enviado para a API de embeddings importa tanto quanto a resposta.
+
+Por que onUnhandledRequest: 'error' no server msw?
+Esse é o detalhe que a maioria esquece. Sem ele, qualquer chamada HTTP não coberta por handler passa em silêncio — ou pior, tenta chegar na internet e falha com erro de rede genérico. Com 'error', o teste falha imediatamente com mensagem clara: "requisição não interceptada para POST /v1/embeddings". Isso força os handlers a serem explícitos.
+
+Por que satisfies DocumentChunk nos fixtures em vez de asserção de tipo normal?
+satisfies (TypeScript 4.9+) valida que o objeto literal obedece o tipo sem ampliar o tipo inferido. Isso significa que chunks.highRelevance.score continua sendo 0.94 (literal), não number. Seus testes podem usar os valores literais com segurança e o compilador avisa se o tipo DocumentChunk mudar.
+
+A nota final para agentes de IA não é decorativa — é a instrução mais importante do arquivo. Um agente sem esse framing vai gerar expect(result).toBeDefined() toda vez que não souber o que assertar, porque essa asserção nunca falha.AgentsDocumento · MD Abrir em Visual Studio CodeVocê disse: Reescreva a documentação deixando apenas os testes em inglês, todas as demais instruções devem ser em português.Reescreva a documentação deixando apenas os testes em inglês, todas as demais instruções devem ser em português.Inclua uma seção sobre a importância da validação "mustNotContain" tanto quando o "mustContain" onde a regra de negócio deve ser priorizada na validação pois validações vagas podem fazer o teste passar verde mas entregando resposta incorreta ao usuário final.14:47Claude respondeu: Agora reescrevo o arquivo completo com todas as instruções em português e os testes em inglês, mais a nova seção sobre mustContain/mustNotContain.Visualizou 2 arquivosVisualizou 2 arquivosAgora reescrevo o arquivo completo com todas as instruções em português e os testes em inglês, mais a nova seção sobre mustContain/mustNotContain.Executou um comando, leu um arquivoExecutou um comando, leu um arquivoFeito. As duas mudanças aplicadas e o raciocínio por trás delas:
+
+Sobre a separação de idiomas
+Toda instrução, explicação, comentário narrativo e cabeçalho está agora em português. O inglês ficou restrito ao que realmente precisa estar em inglês: os blocos de código TypeScript (nomes de variáveis, strings de teste, comentários inline de código). Isso é intencional — comentários dentro de describe/it são parte da especificação executável do sistema, e em projetos multi-idioma é prática comum manter a camada de código num idioma único para evitar fragmentação.
+
+Sobre a seção 5 — mustContain e mustNotContain
+O ponto central da seção não é técnico, é conceitual: um teste verde não é garantia de resposta correta. Isso é especialmente perigoso em RAG porque o sistema pode retornar uma string não-vazia, bem-formatada, sem erro, que ainda assim entrega ao usuário um prazo errado, uma política desatualizada ou uma alucinação.
+A seção foi estruturada em três camadas:
+
+O problema — nomear explicitamente por que isso acontece com testes gerados por IA (otimizam para passar, não para estar corretos)
+mustContain — validar que o conteúdo exigido pela regra de negócio está presente com assertivas concretas
+mustNotContain — validar a ausência de conteúdo proibido: valores desatualizados de políticas, internals vazando, alucinações fora do escopo
+
+A tabela de "casos críticos onde mustNotContain é obrigatório" foi pensada para ser usada diretamente em code review — qualquer PR que toque nos cenários listados sem validação negativa deve ser bloqueado.
